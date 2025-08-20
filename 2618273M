@@ -10,15 +10,24 @@ local stats = window:AddTab("Stats")
 
 local player = game.Players.LocalPlayer
 local leaderstats = player:WaitForChild("leaderstats")
+
+-- Leaderstats
 local strengthStat = leaderstats:WaitForChild("Strength")
 local rebirthsStat = leaderstats:WaitForChild("Rebirths")
-local durabilityStat = leaderstats:WaitForChild("Durability")
 local killsStat = leaderstats:WaitForChild("Kills")
 local agilityStat = leaderstats:WaitForChild("Agility")
-local evilKarmaStat = player:WaitForChild("evilKarma")
-local goodKarmaStat = player:WaitForChild("goodKarma")
 local brawlsStat = leaderstats:WaitForChild("Brawls")
 
+-- Fora do leaderstats
+local durabilityStat = player:WaitForChild("Durability")
+local evilKarmaStat = player:WaitForChild("evilKarma")
+local goodKarmaStat = player:WaitForChild("goodKarma")
+
+-- ===== Config de Exibição =====
+local displayMode = "both" -- pode ser: "both", "compact", "full"
+local formatButton
+
+-- Funções de formatação
 local function AbbrevNumber(num)
     local abbrev = {"", "K", "M", "B", "T", "Qa", "Qi"}
     local i = 1
@@ -26,7 +35,13 @@ local function AbbrevNumber(num)
         num = num / 1000
         i = i + 1
     end
-    return string.format("%.2f%s", num, abbrev[i])
+    if num == 0 then
+        return "0"
+    elseif num % 1 == 0 then
+        return string.format("%d%s", num, abbrev[i])
+    else
+        return string.format("%.2f%s", num, abbrev[i])
+    end
 end
 
 local function FormatWithCommas(num)
@@ -40,20 +55,40 @@ local function FormatWithCommas(num)
 end
 
 local function FormatNumber(num)
-    return FormatWithCommas(num) .. " (" .. AbbrevNumber(num) .. ")"
+    if num == 0 then
+        return "0"
+    end
+    if displayMode == "compact" then
+        return AbbrevNumber(num)
+    elseif displayMode == "full" then
+        return FormatWithCommas(num)
+    else -- "both"
+        return FormatWithCommas(num) .. " (" .. AbbrevNumber(num) .. ")"
+    end
 end
 
+-- ====== Botão de troca de exibição ======
+local function updateFormatButton()
+    formatButton.Text = "Number Format: " .. displayMode
+end
+
+formatButton = stats:AddButton("Number Format: both", function()
+    if displayMode == "both" then
+        displayMode = "compact"
+    elseif displayMode == "compact" then
+        displayMode = "full"
+    else
+        displayMode = "both"
+    end
+    updateFormatButton()
+end)
+
+-- ====== Labels ======
 stats:AddLabel("⏱️ Session Statistics").TextSize = 30
+local stopwatchLabel = stats:AddLabel("Session Time: 0d 0h 0m 0s"); stopwatchLabel.TextSize = 20
+local customTimerLabel = stats:AddLabel("Custom Timer: Not started"); customTimerLabel.TextSize = 20
 
-local stopwatchLabel = stats:AddLabel("Session Time: 0d 0h 0m 0s")
-stopwatchLabel.TextSize = 20
-
-local customTimerLabel = stats:AddLabel("Custom Timer: Not started")
-customTimerLabel.TextSize = 20
-
-local isCustomRunning = false
-local customStart = 0
-local customElapsed = 0
+local isCustomRunning, customStart, customElapsed = false, 0, 0
 
 stats:AddButton("Start/Stop Custom Timer", function()
     if not isCustomRunning then
@@ -78,42 +113,29 @@ stats:AddButton("Reset Session Stats", function()
 end)
 
 stats:AddLabel("------------------").TextSize = 14
-
 stats:AddLabel("📊 Leaderboard Stats").TextSize = 30
 
-local strengthLabel = stats:AddLabel("Strength: -")
-strengthLabel.TextSize = 20
-local rebirthsLabel = stats:AddLabel("Rebirths: -")
-rebirthsLabel.TextSize = 20
-local killsLabel = stats:AddLabel("Kills: -")
-killsLabel.TextSize = 20
-local brawlsLabel = stats:AddLabel("Brawls: -")
-brawlsLabel.TextSize = 20
+local strengthLabel = stats:AddLabel("Strength: -"); strengthLabel.TextSize = 20
+local rebirthsLabel = stats:AddLabel("Rebirths: -"); rebirthsLabel.TextSize = 20
+local killsLabel = stats:AddLabel("Kills: -"); killsLabel.TextSize = 20
+local brawlsLabel = stats:AddLabel("Brawls: -"); brawlsLabel.TextSize = 20
 
 stats:AddLabel("------------------").TextSize = 14
-
 stats:AddLabel("💪 Player Stats").TextSize = 30
 
-local goodKarmaLabel = stats:AddLabel("Good Karma: -")
-goodKarmaLabel.TextSize = 20
-local evilKarmaLabel = stats:AddLabel("Evil Karma: -")
-evilKarmaLabel.TextSize = 20
-local durabilityLabel = stats:AddLabel("Durability: -")
-durabilityLabel.TextSize = 20
-local agilityLabel = stats:AddLabel("Agility: -")
-agilityLabel.TextSize = 20
+local goodKarmaLabel = stats:AddLabel("Good Karma: -"); goodKarmaLabel.TextSize = 20
+local evilKarmaLabel = stats:AddLabel("Evil Karma: -"); evilKarmaLabel.TextSize = 20
+local durabilityLabel = stats:AddLabel("Durability: -"); durabilityLabel.TextSize = 20
+local agilityLabel = stats:AddLabel("Agility: -"); agilityLabel.TextSize = 20
 
 stats:AddLabel("------------------").TextSize = 14
-
 stats:AddLabel("Projected Strength").TextSize = 30
 
-local projectedStrengthLabel = stats:AddLabel("Strength Pace: -")
-projectedStrengthLabel.TextSize = 20
-local projectedDurabilityLabel = stats:AddLabel("Durability Pace: -")
-projectedDurabilityLabel.TextSize = 20
-local projectedRebirthsLabel = stats:AddLabel("Rebirth Pace: -")
-projectedRebirthsLabel.TextSize = 20
+local projectedStrengthLabel = stats:AddLabel("Strength Pace: -"); projectedStrengthLabel.TextSize = 20
+local projectedDurabilityLabel = stats:AddLabel("Durability Pace: -"); projectedDurabilityLabel.TextSize = 20
+local projectedRebirthsLabel = stats:AddLabel("Rebirth Pace: -"); projectedRebirthsLabel.TextSize = 20
 
+-- ====== Valores iniciais ======
 local startTime = tick()
 local initialStrength = strengthStat.Value
 local initialDurability = durabilityStat.Value
@@ -124,6 +146,7 @@ local initialEvilKarma = evilKarmaStat.Value
 local initialGoodKarma = goodKarmaStat.Value
 local initialBrawls = brawlsStat.Value
 
+-- ====== Loop de atualização ======
 task.spawn(function()
     local lastUpdate = 0
     while task.wait(0.2) do
@@ -186,7 +209,7 @@ task.spawn(function()
         durabilityLabel.Text = "Durability: " .. FormatNumber(currentDurability) .. " | Gained: " .. FormatNumber(sessionDurabilityDelta)
         agilityLabel.Text = "Agility: " .. FormatNumber(currentAgility) .. " | Gained: " .. FormatNumber(sessionAgilityDelta)
 
-        if tick() - lastUpdate >= 6 then
+        if tick() - lastUpdate >= 6 and elapsedTime > 0 then
             lastUpdate = tick()
             local strengthPerSec = sessionStrengthDelta / elapsedTime
             local durabilityPerSec = sessionDurabilityDelta / elapsedTime
@@ -208,3 +231,5 @@ task.spawn(function()
         end
     end
 end)
+
+updateFormatButton()
