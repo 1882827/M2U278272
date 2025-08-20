@@ -1,0 +1,501 @@
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/MlFrvWM/BBLT81/main/BL81827TC", true))()
+
+local window = library:AddWindow("Sad 1.03 | Farming", {
+    main_color = Color3.fromRGB(61, 10, 161),
+    min_size = Vector2.new(685, 800),
+    can_resize = false,
+})
+
+local stats = window:AddTab("Stats")
+
+local player = game.Players.LocalPlayer
+local leaderstats = player:WaitForChild("leaderstats")
+local strengthStat = leaderstats:WaitForChild("Strength")
+local rebirthsStat = leaderstats:WaitForChild("Rebirths")
+local durabilityStat = player:WaitForChild("Durability")
+local killsStat = leaderstats:WaitForChild("Kills")
+local agilityStat = player:WaitForChild("Agility")
+local evilKarmaStat = player:WaitForChild("evilKarma")
+local goodKarmaStat = player:WaitForChild("goodKarma")
+local brawlsStat = leaderstats:WaitForChild("Brawls")
+
+local function AbbrevNumber(num)
+    local abbrev = {"", "K", "M", "B", "T", "Qa", "Qi"}
+    local i = 1
+    while num >= 1000 and i < #abbrev do
+        num = num / 1000
+        i = i + 1
+    end
+    return string.format("%.2f%s", num, abbrev[i])
+end
+
+local function FormatWithCommas(num)
+    local formatted = tostring(math.floor(num))
+    while true do  
+        local k
+        formatted, k = formatted:gsub("^(-?%d+)(%d%d%d)", "%1,%2")
+        if k == 0 then break end
+    end
+    return formatted
+end
+
+local function FormatNumber(num)
+    return FormatWithCommas(num) .. " (" .. AbbrevNumber(num) .. ")"
+end
+
+stats:AddLabel("â±ï¸ Session Statistics").TextSize = 30
+
+local stopwatchLabel = stats:AddLabel("Session Time: 0d 0h 0m 0s")
+stopwatchLabel.TextSize = 20
+
+local customTimerLabel = stats:AddLabel("Custom Timer: Not started")
+customTimerLabel.TextSize = 20
+
+local isCustomRunning = false
+local customStart = 0
+local customElapsed = 0
+
+stats:AddButton("Start/Stop Custom Timer", function()
+    if not isCustomRunning then
+        isCustomRunning = true
+        customStart = tick() - customElapsed
+    else
+        isCustomRunning = false
+        customElapsed = tick() - customStart
+    end
+end)
+
+stats:AddButton("Reset Custom Timer", function()
+    isCustomRunning = false
+    customStart = 0
+    customElapsed = 0
+    customTimerLabel.Text = "Custom Timer: Not started"
+end)
+
+local resetSession = false
+stats:AddButton("Reset Session Stats", function()
+    resetSession = true
+end)
+
+stats:AddLabel("------------------").TextSize = 14
+
+stats:AddLabel("📊 Leaderboard Stats").TextSize = 30
+
+local strengthLabel = stats:AddLabel("Strength: -")
+strengthLabel.TextSize = 20
+local rebirthsLabel = stats:AddLabel("Rebirths: -")
+rebirthsLabel.TextSize = 20
+local killsLabel = stats:AddLabel("Kills: -")
+killsLabel.TextSize = 20
+local brawlsLabel = stats:AddLabel("Brawls: -")
+brawlsLabel.TextSize = 20
+
+stats:AddLabel("------------------").TextSize = 14
+
+stats:AddLabel("💪 Player Stats").TextSize = 30
+
+local goodKarmaLabel = stats:AddLabel("Good Karma: -")
+goodKarmaLabel.TextSize = 20
+local evilKarmaLabel = stats:AddLabel("Evil Karma: -")
+evilKarmaLabel.TextSize = 20
+local durabilityLabel = stats:AddLabel("Durability: -")
+durabilityLabel.TextSize = 20
+local agilityLabel = stats:AddLabel("Agility: -")
+agilityLabel.TextSize = 20
+
+stats:AddLabel("------------------").TextSize = 14
+
+stats:AddLabel("Projected Strength").TextSize = 30
+
+local projectedStrengthLabel = stats:AddLabel("Strength Pace: -")
+projectedStrengthLabel.TextSize = 20
+local projectedDurabilityLabel = stats:AddLabel("Durability Pace: -")
+projectedDurabilityLabel.TextSize = 20
+local projectedRebirthsLabel = stats:AddLabel("Rebirth Pace: -")
+projectedRebirthsLabel.TextSize = 20
+
+local startTime = tick()
+local initialStrength = strengthStat.Value
+local initialDurability = durabilityStat.Value
+local initialRebirths = rebirthsStat.Value
+local initialKills = killsStat.Value
+local initialAgility = agilityStat.Value
+local initialEvilKarma = evilKarmaStat.Value
+local initialGoodKarma = goodKarmaStat.Value
+local initialBrawls = brawlsStat.Value
+
+task.spawn(function()
+    local lastUpdate = 0
+    while task.wait(0.2) do
+        local elapsedTime = tick() - startTime
+        local days = math.floor(elapsedTime / (24 * 3600))
+        local hours = math.floor((elapsedTime % (24 * 3600)) / 3600)
+        local minutes = math.floor((elapsedTime % 3600) / 60)
+        local seconds = math.floor(elapsedTime % 60)
+        stopwatchLabel.Text = string.format("Session Time: %dd %dh %dm %ds", days, hours, minutes, seconds)
+
+        if isCustomRunning then
+            customElapsed = tick() - customStart
+        end
+        if customElapsed > 0 then
+            local d = math.floor(customElapsed / (24 * 3600))
+            local h = math.floor((customElapsed % (24 * 3600)) / 3600)
+            local m = math.floor((customElapsed % 3600) / 60)
+            local s = math.floor(customElapsed % 60)
+            customTimerLabel.Text = string.format("Custom Timer: %dd %dh %dm %ds", d, h, m, s)
+        end
+
+        if resetSession then
+            startTime = tick()
+            initialStrength = strengthStat.Value
+            initialDurability = durabilityStat.Value
+            initialRebirths = rebirthsStat.Value
+            initialKills = killsStat.Value
+            initialAgility = agilityStat.Value
+            initialEvilKarma = evilKarmaStat.Value
+            initialGoodKarma = goodKarmaStat.Value
+            initialBrawls = brawlsStat.Value
+            resetSession = false
+        end
+
+        local currentStrength = strengthStat.Value
+        local currentRebirths = rebirthsStat.Value
+        local currentDurability = durabilityStat.Value
+        local currentKills = killsStat.Value
+        local currentAgility = agilityStat.Value
+        local currentEvilKarma = evilKarmaStat.Value
+        local currentGoodKarma = goodKarmaStat.Value
+        local currentBrawls = brawlsStat.Value
+
+        local sessionStrengthDelta = currentStrength - initialStrength
+        local sessionDurabilityDelta = currentDurability - initialDurability
+        local sessionRebirthsDelta = currentRebirths - initialRebirths
+        local sessionKillsDelta = currentKills - initialKills
+        local sessionAgilityDelta = currentAgility - initialAgility
+        local sessionEvilKarmaDelta = currentEvilKarma - initialEvilKarma
+        local sessionGoodKarmaDelta = currentGoodKarma - initialGoodKarma
+        local sessionBrawlsDelta = currentBrawls - initialBrawls
+
+        strengthLabel.Text = "Strength: " .. FormatNumber(currentStrength) .. " | Gained: " .. FormatNumber(sessionStrengthDelta)
+        rebirthsLabel.Text = "Rebirths: " .. FormatNumber(currentRebirths) .. " | Gained: " .. FormatNumber(sessionRebirthsDelta)
+        killsLabel.Text = "Kills: " .. FormatNumber(currentKills) .. " | Gained: " .. FormatNumber(sessionKillsDelta)
+        brawlsLabel.Text = "Brawls: " .. FormatNumber(currentBrawls) .. " | Gained: " .. FormatNumber(sessionBrawlsDelta)
+
+        goodKarmaLabel.Text = "Good Karma: " .. FormatNumber(currentGoodKarma) .. " | Gained: " .. FormatNumber(sessionGoodKarmaDelta)
+        evilKarmaLabel.Text = "Evil Karma: " .. FormatNumber(currentEvilKarma) .. " | Gained: " .. FormatNumber(sessionEvilKarmaDelta)
+        durabilityLabel.Text = "Durability: " .. FormatNumber(currentDurability) .. " | Gained: " .. FormatNumber(sessionDurabilityDelta)
+        agilityLabel.Text = "Agility: " .. FormatNumber(currentAgility) .. " | Gained: " .. FormatNumber(sessionAgilityDelta)
+
+        if tick() - lastUpdate >= 6 then
+            lastUpdate = tick()
+            local strengthPerSec = sessionStrengthDelta / elapsedTime
+            local durabilityPerSec = sessionDurabilityDelta / elapsedTime
+            local rebirthsPerSec = sessionRebirthsDelta / elapsedTime
+
+            local secondsPerHour = 3600
+            local secondsPerDay = 86400
+
+            local strengthHour = math.floor(strengthPerSec * secondsPerHour)
+            local strengthDay = math.floor(strengthPerSec * secondsPerDay)
+            local durabilityHour = math.floor(durabilityPerSec * secondsPerHour)
+            local durabilityDay = math.floor(durabilityPerSec * secondsPerDay)
+            local rebirthsHour = math.floor(rebirthsPerSec * secondsPerHour)
+            local rebirthsDay = math.floor(rebirthsPerSec * secondsPerDay)
+
+            projectedStrengthLabel.Text = "Strength Pace: " .. FormatNumber(strengthHour) .. "/Hour | " .. FormatNumber(strengthDay) .. "/Day"
+            projectedDurabilityLabel.Text = "Durability Pace: " .. FormatNumber(durabilityHour) .. "/Hour | " .. FormatNumber(durabilityDay) .. "/Day"
+            projectedRebirthsLabel.Text = "Rebirth Pace: " .. FormatNumber(rebirthsHour) .. "/Hour | " .. FormatNumber(rebirthsDay) .. "/Day"
+        end
+    end
+end)
+end
+
+local tabCal = window:AddTab("Calculator")
+tabCal:AddLabel("Calculations").TextSize = 30
+
+local function parseValue(s)
+    if not s then return 0 end
+    s = s:upper():gsub("%s", ""):gsub(",", "")
+    local suffixes = {
+        K = 1e3, M = 1e6, B = 1e9, T = 1e12,
+        QA = 1e15, QN = 1e18, SX = 1e21,
+        SP = 1e24, OC = 1e27
+    }
+    local numPart, suf = s:match("^([%-]?[%d%.]+)(%a*)$")
+    if not numPart then return 0 end
+    local n = tonumber(numPart) or 0
+    if suf ~= "" and suffixes[suf] then
+        return n * suffixes[suf]
+    end
+    return n
+end
+
+local function formatValue(n)
+    local absn = math.abs(n)
+    local sign = n < 0 and "-" or ""
+    if absn >= 1e27 then
+        return string.format("%s%.2fOc", sign, absn / 1e27)
+    elseif absn >= 1e24 then
+        return string.format("%s%.2fSp", sign, absn / 1e24)
+    elseif absn >= 1e21 then
+        return string.format("%s%.2fSx", sign, absn / 1e21)
+    elseif absn >= 1e18 then
+        return string.format("%s%.2fQn", sign, absn / 1e18)
+    elseif absn >= 1e15 then
+        return string.format("%s%.2fQa", sign, absn / 1e15)
+    elseif absn >= 1e12 then
+        return string.format("%s%.2fT", sign, absn / 1e12)
+    elseif absn >= 1e9 then
+        return string.format("%s%.2fB", sign, absn / 1e9)
+    elseif absn >= 1e6 then
+        return string.format("%s%.2fM", sign, absn / 1e6)
+    elseif absn >= 1e3 then
+        return string.format("%s%.2fK", sign, absn / 1e3)
+    else
+        return string.format("%s%.2f", sign, absn)
+    end
+end
+
+local folderRebirth = tabCal:AddFolder("Rebirth Calculator")
+local lblTitleRebirth = folderRebirth:AddLabel("Rebirth Calculator")
+lblTitleRebirth.TextSize = 30
+
+local selectedRebirths = 0
+local strengthPerRep = 0
+local repsPerSecond = 75
+local eggMultiplier = 2
+local useCurrentRebirth = false
+local useEggs = false
+
+local lblSelected   = folderRebirth:AddLabel("Selected Rebirths: -")
+local lblStrength   = folderRebirth:AddLabel("Strength per Rep: -")
+local lblHour       = folderRebirth:AddLabel("Strength gained in 1h: -")
+local lblDay        = folderRebirth:AddLabel("Strength gained in 1d: -")
+local lblWeek       = folderRebirth:AddLabel("Strength gained in 1w: -")
+
+local function getCurrentRebirth()
+    local player = game.Players.LocalPlayer
+    if player and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Rebirths") then
+        return tonumber(player.leaderstats.Rebirths.Value) or 0
+    end
+    return 0
+end
+
+local function updateRebirthCalc()
+    local rebirths = useCurrentRebirth and getCurrentRebirth() or selectedRebirths
+    if useEggs then
+        rebirths = rebirths * eggMultiplier
+    end
+    strengthPerRep = rebirths * 26.53 
+    local strengthHour = strengthPerRep * repsPerSecond * 3600
+    local strengthDay  = strengthHour * 24
+    local strengthWeek = strengthDay * 7
+    lblSelected.Text = string.format("Selected Rebirths: %s", formatValue(rebirths))
+    lblStrength.Text = string.format("Strength per Rep: %s", formatValue(strengthPerRep))
+    lblHour.Text     = string.format("Strength gained in 1h: %s", formatValue(strengthHour))
+    lblDay.Text      = string.format("Strength gained in 1d: %s", formatValue(strengthDay))
+    lblWeek.Text     = string.format("Strength gained in 1w: %s", formatValue(strengthWeek))
+end
+
+folderRebirth:AddTextBox("Rebirth Input", function(value)
+    selectedRebirths = parseValue(value)
+    if not useCurrentRebirth then updateRebirthCalc() end
+end, { clear = false, text = tostring(selectedRebirths) })
+
+folderRebirth:AddSwitch("Use Current Rebirth", function(state)
+    useCurrentRebirth = state
+    updateRebirthCalc()
+end):Set(useCurrentRebirth)
+
+folderRebirth:AddSwitch("Eggs", function(state)
+    useEggs = state
+    updateRebirthCalc()
+end):Set(useEggs)
+
+local player = game.Players.LocalPlayer
+if player and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Rebirths") then
+    player.leaderstats.Rebirths.Changed:Connect(function()
+        if useCurrentRebirth then updateRebirthCalc() end
+    end)
+end
+updateRebirthCalc()
+
+local folderDamage = tabCal:AddFolder("Damage Calculator")
+local lblTitleDamage = folderDamage:AddLabel("Strength To Damage")
+lblTitleDamage.TextSize = 30
+
+local BASE_DAMAGE_FACTOR = 0.1
+local PACK_FACTOR_PER_PACK = 0.0335
+local PACKS_MAX = 8
+
+local function parseValue(s)
+    if not s then return 0 end
+    s = s:upper():gsub("%s", ""):gsub(",", "")
+    local suffixes = { B = 1e9, T = 1e12, QA = 1e15 }
+    local numPart, suf = s:match("^([%-]?[%d%.]+)(%a*)$")
+    if not numPart then return 0 end
+    local n = tonumber(numPart) or 0
+    if suf ~= "" and suffixes[suf] then
+        return n * suffixes[suf]
+    end
+    return n
+end
+
+local function formatValue(n)
+    local absn = math.abs(n)
+    local sign = n < 0 and "-" or ""
+    if absn >= 1e15 then
+        return string.format("%s%.2fQa", sign, absn / 1e15)
+    elseif absn >= 1e12 then
+        return string.format("%s%.2fT", sign, absn / 1e12)
+    elseif absn >= 1e9 then
+        return string.format("%s%.2fB", sign, absn / 1e9)
+    else
+        return string.format("%s%.2f", sign, absn)
+    end
+end
+
+local function getCurrentStrength()
+    local player = game.Players.LocalPlayer
+    if player and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Strength") then
+        return tonumber(player.leaderstats.Strength.Value) or 0
+    end
+    return 0
+end
+
+local lblUsedStrength = folderDamage:AddLabel("Used Strength: -")
+local lblBaseDamage   = folderDamage:AddLabel("Base Damage: -")
+local lblFinalDamage  = folderDamage:AddLabel("Damage with X Packs: -")
+local lblIncrease     = folderDamage:AddLabel("Damage Increase: -")
+
+local strengthText = "7.08Qa"
+local packsCount = 8
+local useCurrentStrength = true
+local useFullPacks = true
+
+local function updateDisplay()
+    local strength = useCurrentStrength and getCurrentStrength() or parseValue(strengthText)
+    local packs = useFullPacks and PACKS_MAX or packsCount
+    local baseDamage = strength * BASE_DAMAGE_FACTOR
+    local finalDamage = strength * (BASE_DAMAGE_FACTOR + PACK_FACTOR_PER_PACK * packs)
+    local increaseValue = finalDamage - baseDamage
+    local increasePercent = baseDamage > 0 and ((finalDamage / baseDamage) - 1) * 100 or 0
+    lblUsedStrength.Text = "Used Strength: " .. formatValue(strength)
+    lblBaseDamage.Text   = "Base Damage: " .. formatValue(baseDamage)
+    lblFinalDamage.Text = string.format("Damage with %d Packs: %s", packs, formatValue(finalDamage))
+    lblFinalDamage.TextColor3 = Color3.fromRGB(255, 0, 0)
+    lblIncrease.Text = string.format("Damage Increase: %s (+%.0f%%)", formatValue(increaseValue), increasePercent)
+end
+
+folderDamage:AddTextBox("Strength Input", function(value)
+    strengthText = value
+    if not useCurrentStrength then updateDisplay() end
+end, { clear = false, text = strengthText })
+
+folderDamage:AddTextBox("Packs Count (0-8)", function(value)
+    local num = tonumber(value) or 0
+    if num < 0 then num = 0 elseif num > PACKS_MAX then num = PACKS_MAX end
+    packsCount = num
+    if not useFullPacks then updateDisplay() end
+end, { clear = false, text = tostring(packsCount) })
+
+folderDamage:AddSwitch("Use Current Strength", function(state)
+    useCurrentStrength = state
+    updateDisplay()
+end):Set(useCurrentStrength)
+
+folderDamage:AddSwitch("Use Full Packs (8)", function(state)
+    useFullPacks = state
+    updateDisplay()
+end):Set(useFullPacks)
+
+local player = game.Players.LocalPlayer
+if player and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Strength") then
+    player.leaderstats.Strength.Changed:Connect(function()
+        if useCurrentStrength then updateDisplay() end
+    end)
+end
+updateDisplay()
+
+local folderDur = tabCal:AddFolder("Hit Calculator")
+local lblTitleHits = folderDur:AddLabel("Hit Calculations")
+lblTitleHits.TextSize = 30
+
+local ULTIMATE_BOOST_PERCENT = 75
+local PETS_BOOST_PER_PACK = 33.125
+local ATTACK_SPEED = 1.3
+
+local function getCurrentDurability()
+    local player = game.Players.LocalPlayer
+    if player and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Durability") then
+        return parseValue(player.leaderstats.Durability.Value)
+    end
+    return 0
+end
+
+local initialDurability = getCurrentDurability()
+local durabilityText = formatValue(initialDurability)
+local packsCountDur = PACKS_MAX
+local useCurrentDurability = true
+local useFullPacksDur = true
+local incomingDamage = parseValue("2.6Qa")
+
+local lblPlayerDur = folderDur:AddLabel("Player Durability: -")
+local lblUltimate  = folderDur:AddLabel("Ultimate Boost: -")
+local lblPets      = folderDur:AddLabel("Pets Boost: -")
+local lblTotalHP   = folderDur:AddLabel("Total Health: -")
+local lblHitsKill  = folderDur:AddLabel("Hits to Kill: -")
+local lblTimeKill  = folderDur:AddLabel("Time to Kill: -")
+
+local function updateDisplayDurability()
+    local dur = useCurrentDurability and getCurrentDurability() or parseValue(durabilityText)
+    local packs = useFullPacksDur and PACKS_MAX or packsCountDur
+    local ultimateBoostValue = dur * (ULTIMATE_BOOST_PERCENT / 100)
+    local petsBoostValue = dur * ((PETS_BOOST_PER_PACK * packs) / 100)
+    local totalHealth = dur + ultimateBoostValue + petsBoostValue
+    local hitsToKill = (incomingDamage > 0) and math.max(1, math.ceil(totalHealth / incomingDamage)) or 0
+    local timeToKillSec = (ATTACK_SPEED > 0) and (hitsToKill / ATTACK_SPEED) or 0
+    local minutes = math.floor(timeToKillSec / 60)
+    local seconds = timeToKillSec - (minutes * 60)
+    lblPlayerDur.Text = string.format("Player Durability: %s", formatValue(dur))
+    lblUltimate.Text  = string.format("Ultimate Boost: %s (+%d%%)", formatValue(ultimateBoostValue), ULTIMATE_BOOST_PERCENT)
+    lblPets.Text      = string.format("Pets Boost (%d): %s (+%.3f%%)", packs, formatValue(petsBoostValue), PETS_BOOST_PER_PACK * packs)
+    lblTotalHP.Text   = string.format("Total Health: %s", formatValue(totalHealth))
+    lblTotalHP.TextColor3 = Color3.fromRGB(0, 255, 255)
+    lblHitsKill.Text  = string.format("Hits to Kill: %d", hitsToKill)
+    lblTimeKill.Text  = string.format("Time to Kill: %dm %.1fs", minutes, seconds)
+end
+
+folderDur:AddTextBox("Durability Input", function(value)
+    durabilityText = value
+    updateDisplayDurability()
+end, { clear = false, text = durabilityText })
+
+folderDur:AddTextBox("Target Packs Count (0-8)", function(value)
+    local num = tonumber(value) or 0
+    if num < 0 then num = 0 elseif num > PACKS_MAX then num = PACKS_MAX end
+    packsCountDur = num
+    if not useFullPacksDur then updateDisplayDurability() end
+end, { clear = false, text = tostring(packsCountDur) })
+
+folderDur:AddTextBox("Incoming Damage (per hit)", function(value)
+    incomingDamage = parseValue(value)
+    updateDisplayDurability()
+end, { clear = false, text = formatValue(incomingDamage) })
+
+folderDur:AddSwitch("Use Current Durability", function(state)
+    useCurrentDurability = state
+    updateDisplayDurability()
+end, { state = useCurrentDurability })
+
+folderDur:AddSwitch("Use Full Packs", function(state)
+    useFullPacksDur = state
+    updateDisplayDurability()
+end, { state = useFullPacksDur })
+
+if player and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Durability") then
+    player.leaderstats.Durability.Changed:Connect(function()
+        if useCurrentDurability then updateDisplayDurability() end
+    end)
+end
+updateDisplayDurability()
